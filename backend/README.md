@@ -27,12 +27,17 @@ Production-ready REST API for the EduTrack Parent Student Results Portal. Built 
 
 ## Deployment (Vercel)
 
-1. Create a Vercel project from this repo.
-2. **Root Directory:** set to `backend` (Project → Settings → General).
-3. Add env vars: `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production`.
-4. Deploy, then open `GET /api/health` on your deployment URL (JSON, not HTML 404).
+Use a **separate** Vercel project for the API (not the Vite frontend).
 
-If Root Directory is left at the repo root, the root `vercel.json` + `api/index.js` fallback is used instead.
+1. Import this GitHub repo → new project (e.g. `edutrack-backend`).
+2. **Settings → General → Root Directory:** `backend` (recommended).  
+   Alternative: leave Root Directory **empty** (repo root uses root `server.js`).
+3. **Settings → General → Framework Preset:** **Other** (must **not** be Vite).
+4. **Environment variables:** `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production`.
+5. Deploy → **Deployment → Resources** should show an Express / Node function (not “Static Assets” only).
+6. Smoke test: `GET https://<your-backend>.vercel.app/api/health` → JSON `{ "status": "ok", ... }`.
+
+If you still get `404 NOT_FOUND` (Vercel HTML), the preset or Root Directory is wrong — fix steps 2–3 and redeploy.
 
 ## Deployment (100% Free on Render.com)
 

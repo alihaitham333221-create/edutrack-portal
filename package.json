@@ -1,0 +1,9 @@
+{
+  "name": "edutrack-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Monorepo root shim for Vercel Express zero-config",
+  "scripts": {
+    "start": "node backend/src/server.js"
+  }
+}
