@@ -24,32 +24,51 @@ const app = express();
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet());
 
+// ── Normalize duplicate slashes in URL ────────────────────────────────────────
+app.use((req, _res, next) => {
+  if (req.url && req.url.includes('//')) {
+    req.url = req.url.replace(/\/{2,}/g, '/');
+  }
+  next();
+});
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
-  .map(u => u.trim())
+  .map(u => u.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
     // Allow requests with no origin (curl, Postman, Electron, server-to-server)
     if (!origin) return cb(null, true);
     if (process.env.NODE_ENV !== 'production' || allowedOrigins.length === 0) return cb(null, true);
+
+    const cleanOrigin = origin.trim().replace(/\/+$/, '');
+
     if (
-      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes(cleanOrigin) ||
       allowedOrigins.includes('*') ||
-      origin.startsWith('http://localhost') ||
-      origin.startsWith('vscode-') ||
-      origin.startsWith('file://')
+      cleanOrigin.startsWith('http://localhost') ||
+      cleanOrigin.startsWith('http://127.0.0.1') ||
+      cleanOrigin.startsWith('vscode-') ||
+      cleanOrigin.startsWith('file://') ||
+      cleanOrigin.endsWith('.vercel.app')
     ) {
       return cb(null, true);
     }
-    cb(new Error(`CORS: origin ${origin} not allowed`));
+
+    logger.warn(`[CORS] Origin rejected: ${origin}`);
+    return cb(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   credentials: true,
-}));
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(compression());

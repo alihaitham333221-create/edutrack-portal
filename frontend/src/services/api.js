@@ -1,17 +1,31 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Ensure base URL has no trailing slashes and properly points to /api/public
+const getBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').trim().replace(/\/+$/, '');
+  
+  if (envUrl.endsWith('/api/public')) {
+    return envUrl;
+  }
+  if (envUrl.endsWith('/api')) {
+    return `${envUrl}/public`;
+  }
+  return `${envUrl}/api/public`;
+};
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api/public`,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor to attach token
+// Interceptor to attach token and normalize path slashes
 api.interceptors.request.use(
   (config) => {
+    if (config.url) {
+      config.url = config.url.replace(/^\/+/, '/');
+    }
     const token = sessionStorage.getItem('portal_jwt');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
