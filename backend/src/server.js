@@ -2,19 +2,19 @@
 
 require('dotenv').config();
 
-const express   = require('express');
-const cors      = require('cors');
-const helmet    = require('helmet');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const morgan    = require('morgan');
+const morgan = require('morgan');
 const compression = require('compression');
 
-const mongoose   = require('mongoose');
-const connectDB      = require('./config/db');
-const publicRoutes   = require('./routes/public');
-const adminRoutes    = require('./routes/admin');
-const errorHandler   = require('./middleware/errorHandler');
-const logger         = require('./utils/logger');
+const mongoose = require('mongoose');
+const connectDB = require('./config/db');
+const publicRoutes = require('./routes/public');
+const adminRoutes = require('./routes/admin');
+const errorHandler = require('./middleware/errorHandler');
+const logger = require('./utils/logger');
 
 // ── Connect to MongoDB ────────────────────────────────────────────────────────
 connectDB();
@@ -66,7 +66,7 @@ app.use(morgan(
 ));
 
 // ── Health check (standalone, does not require DB) ───────────────────────────
-app.get('/api/health', (_req, res) => {
+app.get(['/api/health', '/health', '/api', '/'], (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -86,9 +86,11 @@ app.use(async (_req, _res, next) => {
   next();
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
+// ── Routes (support both /api and direct paths) ────────────────────────────────
 app.use('/api/public', publicRoutes);
 app.use('/api/admin',  adminRoutes);
+app.use('/public',     publicRoutes);
+app.use('/admin',      adminRoutes);
 
 // 404 handler
 app.use((_req, res) => {

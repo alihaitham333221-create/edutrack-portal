@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Vercel Serverless Function entry point for Express backend.
- * Vercel automatically routes requests through this handler.
+ * Vercel serverless entry: all traffic is rewritten here (see vercel.json).
+ * Export the Express app so @vercel/node can serve every route (e.g. /api/health).
  */
 const app = require('../src/server');
 
