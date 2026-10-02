@@ -66,7 +66,7 @@ app.use(morgan(
 ));
 
 // ── Health check (standalone, does not require DB) ───────────────────────────
-app.get(['/api/health', '/health', '/api', '/'], (_req, res) => {
+app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),

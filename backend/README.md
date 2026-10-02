@@ -25,6 +25,15 @@ Production-ready REST API for the EduTrack Parent Student Results Portal. Built 
    npm run dev
    ```
 
+## Deployment (Vercel)
+
+1. Create a Vercel project from this repo.
+2. **Root Directory:** set to `backend` (Project → Settings → General).
+3. Add env vars: `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production`.
+4. Deploy, then open `GET /api/health` on your deployment URL (JSON, not HTML 404).
+
+If Root Directory is left at the repo root, the root `vercel.json` + `api/index.js` fallback is used instead.
+
 ## Deployment (100% Free on Render.com)
 
 1. Create a free MongoDB Atlas database cluster and obtain the `MONGODB_URI`.
