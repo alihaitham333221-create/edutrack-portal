@@ -33,11 +33,12 @@ Use a **separate** Vercel project for the API (not the Vite frontend).
 2. **Settings → General → Root Directory:** `backend` (recommended).  
    Alternative: leave Root Directory **empty** (repo root uses root `server.js`).
 3. **Settings → General → Framework Preset:** **Other** (must **not** be Vite).
-4. **Environment variables:** `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production`.
-5. Deploy → **Deployment → Resources** should show an Express / Node function (not “Static Assets” only).
-6. Smoke test: `GET https://<your-backend>.vercel.app/api/health` → JSON `{ "status": "ok", ... }`.
+4. **Build & Development:** leave **Build Command** and **Output Directory** empty (do not use “Static”).
+5. **Environment variables:** `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production`.
+6. Deploy → **Deployment → Resources / Functions** must list **`api/index.js`** (Node). **Static only = wrong project or wrong Root Directory** (frontend uses static; backend must not).
+7. Smoke test: `GET https://<your-backend>.vercel.app/api/health` → JSON `{ "status": "ok", ... }`.
 
-If you still get `404 NOT_FOUND` (Vercel HTML), the preset or Root Directory is wrong — fix steps 2–3 and redeploy.
+If you still get `404 NOT_FOUND` (Vercel HTML), the preset or Root Directory is wrong — fix steps 2–4 and redeploy.
 
 ## Deployment (100% Free on Render.com)
 

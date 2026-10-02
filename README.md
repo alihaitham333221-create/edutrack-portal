@@ -7,7 +7,9 @@ Monorepo: **frontend** (Vite/React) + **backend** (Express/MongoDB).
 | Vercel project | Root Directory | Framework preset | Env vars |
 |----------------|----------------|------------------|----------|
 | `edutrack-portal` (UI) | **`frontend`** | **Vite** | `VITE_API_URL=https://edutrack-backend.vercel.app` |
-| `edutrack-backend` (API) | **`backend`** | **Other** (Express) | `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production` |
+| `edutrack-backend` (API) | **`backend`** | **Other** (not Vite; empty build/output) | `MONGODB_URI`, `JWT_SECRET`, `ADMIN_API_KEY`, `FRONTEND_URL`, `NODE_ENV=production` |
+
+**Backend** deployments should show a **Node function** (`api/index.js`). **Frontend** deployments show **static** files only — that is normal for the UI project.
 
 Do **not** leave Root Directory empty on the frontend project. The repo root is configured for the API only (`server.js`, root `vercel.json`); an empty root on the portal project produces **404 NOT_FOUND** on `/`.
 
