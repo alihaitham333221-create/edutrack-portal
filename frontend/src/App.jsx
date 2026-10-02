@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GraduationCap } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import LoginPage from './pages/LoginPage';
 import ResultsPage from './pages/ResultsPage';
 import LanguageToggle from './components/LanguageToggle';
@@ -55,6 +56,7 @@ export default function App() {
       <footer className="footer">
         <p>{t.footerText}</p>
       </footer>
+      <Analytics />
     </div>
   );
 }
