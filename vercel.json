@@ -1,5 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install --prefix backend",
-  "framework": null
+  "framework": null,
+  "functions": {
+    "server.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/index.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }

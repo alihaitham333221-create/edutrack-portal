@@ -94,7 +94,12 @@ app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], (_r
 });
 
 // ── Ensure DB Connection for API routes ───────────────────────────────────────
-app.use(async (_req, _res, next) => {
+app.use(async (req, res, next) => {
+  // Allow health check without DB
+  if (req.path === '/api/health' || req.path === '/health' || req.path === '/' || req.path === '/api') {
+    return next();
+  }
+
   if (mongoose.connection.readyState !== 1) {
     try {
       await connectDB();
@@ -102,6 +107,14 @@ app.use(async (_req, _res, next) => {
       logger.error(`[DB Middleware] ${err.message}`);
     }
   }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection failed. Please check MONGODB_URI and ensure MongoDB Atlas Network Access has 0.0.0.0/0 allowed.',
+    });
+  }
+
   next();
 });
 

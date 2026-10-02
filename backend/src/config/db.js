@@ -2,14 +2,15 @@
 
 const mongoose = require('mongoose');
 
-let cachedConnection = null;
+let cachedConn = null;
+let cachedPromise = null;
 
 /**
  * Connect to MongoDB instance using Mongoose (Serverless-safe with connection caching)
  */
 const connectDB = async () => {
-  if (cachedConnection && mongoose.connection.readyState === 1) {
-    return cachedConnection;
+  if (cachedConn && mongoose.connection.readyState === 1) {
+    return cachedConn;
   }
 
   const uri = process.env.MONGODB_URI;
@@ -18,21 +19,28 @@ const connectDB = async () => {
     return null;
   }
 
-  try {
-    const conn = await mongoose.connect(uri, {
-      autoIndex: process.env.NODE_ENV !== 'production',
+  if (!cachedPromise) {
+    cachedPromise = mongoose.connect(uri, {
+      autoIndex: false,
       dbName: 'edutrack_portal',
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+      bufferCommands: false,
+    }).then((conn) => {
+      console.log(`[MongoDB] Connected: ${conn.connection.host}`);
+      return conn;
+    }).catch((err) => {
+      cachedPromise = null;
+      console.error(`[MongoDB] Connection Error: ${err.message}`);
+      throw err;
     });
-    cachedConnection = conn;
-    console.log(`[MongoDB] Connected: ${conn.connection.host}`);
-    return conn;
+  }
+
+  try {
+    cachedConn = await cachedPromise;
+    return cachedConn;
   } catch (error) {
-    console.error(`[MongoDB] Connection Error: ${error.message}`);
-    // Never kill process on Vercel/serverless to avoid FUNCTION_INVOCATION_FAILED (500)
-    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    cachedPromise = null;
     return null;
   }
 };

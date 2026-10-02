@@ -88,7 +88,7 @@ studentSchema.methods.matchAccessCode = async function (enteredCode) {
 
 // Static helper to hash access code
 studentSchema.statics.hashAccessCode = async function (code) {
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(8);
   return await bcrypt.hash(String(code), salt);
 };
 

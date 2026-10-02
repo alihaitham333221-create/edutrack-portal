@@ -14,7 +14,7 @@ function generateAccessCode() {
 }
 
 /**
- * Perform idempotent full data synchronization
+ * Perform idempotent full data synchronization using bulk operations
  */
 async function syncFullData(payload) {
   const { students = [], groups = [], sessions = [], attendance = [], quizzes = [] } = payload;
@@ -42,8 +42,10 @@ async function syncFullData(payload) {
     }
   }
 
-  // ── 1. Process Sessions ─────────────────────────────────────────────────────
+  // ── 1. Process Sessions (Bulk) ──────────────────────────────────────────────
   const sessionMap = new Map();
+  const sessionOpsMap = new Map();
+
   for (const s of sessions) {
     if (!s.id) continue;
     const group = groupMap.get(s.groupId) || {};
@@ -66,12 +68,18 @@ async function syncFullData(payload) {
 
     sessionMap.set(s.id, sessionData);
 
-    await Session.findOneAndUpdate(
-      { sessionId: s.id },
-      { $set: sessionData },
-      { upsert: true, new: true }
-    );
-    resultStats.sessionsUpserted++;
+    sessionOpsMap.set(s.id, {
+      updateOne: {
+        filter: { sessionId: s.id },
+        update: { $set: sessionData },
+        upsert: true,
+      },
+    });
+  }
+
+  if (sessionOpsMap.size > 0) {
+    await Session.bulkWrite(Array.from(sessionOpsMap.values()), { ordered: false });
+    resultStats.sessionsUpserted = sessionOpsMap.size;
   }
 
   // ── 2. Build student→groups map ─────────────────────────────────────────────
@@ -92,8 +100,9 @@ async function syncFullData(payload) {
     }
   }
 
-  // ── 3. Process Students ─────────────────────────────────────────────────────
+  // ── 3. Process Students (Bulk with pre-fetched existing records) ─────────────
   const internalIdToBarcodeMap = new Map();
+  const deduplicatedStudentsMap = new Map();
 
   for (const st of students) {
     const barcode = (st.barcode || st.id || '').trim();
@@ -101,27 +110,56 @@ async function syncFullData(payload) {
 
     internalIdToBarcodeMap.set(st.id, barcode);
     internalIdToBarcodeMap.set(barcode, barcode);
+    deduplicatedStudentsMap.set(barcode, { ...st, barcode });
+  }
 
-    const existingStudent = await Student.findOne({ barcode });
+  const validStudents = Array.from(deduplicatedStudentsMap.values());
+  const allBarcodes = validStudents.map(s => s.barcode);
 
-    let rawAccessCode  = existingStudent?.rawAccessCode;
-    let accessCodeHash = existingStudent?.accessCodeHash;
+  // Single query for all existing students
+  const existingStudents = allBarcodes.length > 0
+    ? await Student.find({ barcode: { $in: allBarcodes } }, 'barcode rawAccessCode accessCodeHash').lean()
+    : [];
 
-    if (!accessCodeHash) {
-      rawAccessCode  = generateAccessCode();
-      accessCodeHash = await Student.hashAccessCode(rawAccessCode);
+  const existingMap = new Map(existingStudents.map(s => [s.barcode, s]));
+
+  // Generate hashes only for new students missing an access code
+  const newCodePromises = [];
+  for (const st of validStudents) {
+    const existing = existingMap.get(st.barcode);
+    if (!existing?.accessCodeHash) {
+      const rawAccessCode = generateAccessCode();
       resultStats.generatedAccessCodes.push({
         studentId:  st.id,
         name:       st.name,
-        barcode,
+        barcode:    st.barcode,
         accessCode: rawAccessCode,
       });
+
+      newCodePromises.push(
+        (async () => {
+          const hash = await Student.hashAccessCode(rawAccessCode);
+          return { barcode: st.barcode, rawAccessCode, accessCodeHash: hash };
+        })()
+      );
     }
+  }
+
+  const generatedCodes = await Promise.all(newCodePromises);
+  const generatedMap = new Map(generatedCodes.map(c => [c.barcode, c]));
+
+  const studentOps = [];
+  for (const st of validStudents) {
+    const existing = existingMap.get(st.barcode);
+    const generated = generatedMap.get(st.barcode);
+
+    const rawAccessCode = existing?.rawAccessCode || generated?.rawAccessCode;
+    const accessCodeHash = existing?.accessCodeHash || generated?.accessCodeHash;
 
     const studentGroups = studentGroupsMap.get(st.id) || [];
 
     const studentData = {
-      barcode,
+      barcode:     st.barcode,
       accessCodeHash,
       rawAccessCode,
       name:        st.name        || 'Unknown Student',
@@ -132,21 +170,28 @@ async function syncFullData(payload) {
       dob:         st.dob         || '',
       email:       st.email       || '',
       phone:       st.phone       || '',
-      parentPhone: st.parentPhone || '',   // ← stored in DB now
+      parentPhone: st.parentPhone || '',
       isBlocked:   !!st.isBlocked,
       groups:      studentGroups,
       syncedAt:    new Date(),
     };
 
-    await Student.findOneAndUpdate(
-      { barcode },
-      { $set: studentData },
-      { upsert: true, new: true }
-    );
-    resultStats.studentsUpserted++;
+    studentOps.push({
+      updateOne: {
+        filter: { barcode: st.barcode },
+        update: { $set: studentData },
+        upsert: true,
+      },
+    });
   }
 
-  // ── 4. Process Attendance ───────────────────────────────────────────────────
+  if (studentOps.length > 0) {
+    await Student.bulkWrite(studentOps, { ordered: false });
+    resultStats.studentsUpserted = studentOps.length;
+  }
+
+  // ── 4. Process Attendance (Bulk) ────────────────────────────────────────────
+  const attendanceOpsMap = new Map();
   for (const att of attendance) {
     if (!att.id || !att.sessionId || !att.studentId) continue;
 
@@ -170,15 +215,22 @@ async function syncFullData(payload) {
       sessionCenter:    sessionInfo?.center    || '',
     };
 
-    await Attendance.findOneAndUpdate(
-      { attendanceId: att.id },
-      { $set: attendanceData },
-      { upsert: true, new: true }
-    );
-    resultStats.attendanceUpserted++;
+    attendanceOpsMap.set(att.id, {
+      updateOne: {
+        filter: { attendanceId: att.id },
+        update: { $set: attendanceData },
+        upsert: true,
+      },
+    });
   }
 
-  // ── 5. Process Quiz Results ─────────────────────────────────────────────────
+  if (attendanceOpsMap.size > 0) {
+    await Attendance.bulkWrite(Array.from(attendanceOpsMap.values()), { ordered: false });
+    resultStats.attendanceUpserted = attendanceOpsMap.size;
+  }
+
+  // ── 5. Process Quiz Results (Bulk) ──────────────────────────────────────────
+  const quizOpsMap = new Map();
   for (const q of quizzes) {
     if (!q.id || !q.sessionId || !q.studentId) continue;
 
@@ -201,12 +253,18 @@ async function syncFullData(payload) {
       recordedAt:   q.recordedAt ? new Date(q.recordedAt) : new Date(),
     };
 
-    await QuizResult.findOneAndUpdate(
-      { quizId: q.id },
-      { $set: quizData },
-      { upsert: true, new: true }
-    );
-    resultStats.quizzesUpserted++;
+    quizOpsMap.set(q.id, {
+      updateOne: {
+        filter: { quizId: q.id },
+        update: { $set: quizData },
+        upsert: true,
+      },
+    });
+  }
+
+  if (quizOpsMap.size > 0) {
+    await QuizResult.bulkWrite(Array.from(quizOpsMap.values()), { ordered: false });
+    resultStats.quizzesUpserted = quizOpsMap.size;
   }
 
   logger.info(`[SyncService] Completed: ${JSON.stringify(resultStats)}`);
