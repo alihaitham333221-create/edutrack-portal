@@ -9,7 +9,7 @@ import {
   MapPin,
   ExternalLink,
   Headphones,
-  GraduationCap,
+  Navigation,
   Sparkles,
 } from 'lucide-react';
 import { translations } from '../utils/i18n';
@@ -221,7 +221,7 @@ export default function ContactModal({ isOpen, onClose, lang = 'ar' }) {
           )}
         </div>
 
-        {/* ── Working Hours & Location Strip ── */}
+        {/* ── Working Hours Strip ── */}
         <div className="contact-meta-strip">
           {contact.workHours && (
             <div className="contact-meta-item">
@@ -229,13 +229,49 @@ export default function ContactModal({ isOpen, onClose, lang = 'ar' }) {
               <span>{lang === 'ar' ? contact.workHoursAr : contact.workHours}</span>
             </div>
           )}
-          {contact.location && (
-            <div className="contact-meta-item">
-              <MapPin size={15} className="contact-meta-icon" />
-              <span>{lang === 'ar' ? contact.locationAr : contact.location}</span>
-            </div>
-          )}
         </div>
+
+        {/* ── Where Are We — Centers Section ── */}
+        {contact.centers && contact.centers.length > 0 && (() => {
+          // Group centers by governorate
+          const groups = contact.centers.reduce((acc, c) => {
+            const gov = lang === 'ar' ? c.governorate : c.governorateEn;
+            if (!acc[gov]) acc[gov] = [];
+            acc[gov].push(c);
+            return acc;
+          }, {});
+
+          return (
+            <div className="contact-centers-section">
+              <div className="contact-centers-header">
+                <MapPin size={14} />
+                <span>{t.centersLocations}</span>
+              </div>
+              <div className="contact-centers-body">
+                {Object.entries(groups).map(([gov, items]) => (
+                  <div key={gov} className="contact-gov-group">
+                    <div className="contact-gov-label">{gov}</div>
+                    <div className="contact-gov-centers">
+                      {items.map((c, i) => (
+                        <a
+                          key={i}
+                          href={c.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="contact-center-chip"
+                        >
+                          <Navigation size={11} />
+                          <span>{lang === 'ar' ? c.name : c.nameEn}</span>
+                          <ExternalLink size={10} style={{ opacity: 0.6 }} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Social Links ── */}
         {(contact.facebook || contact.telegram) && (
