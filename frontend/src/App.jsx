@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import ResultsPage from './pages/ResultsPage';
 import LanguageToggle from './components/LanguageToggle';
 import { translations } from './utils/i18n';
+import { saveBarcodeToookie, getSavedBarcode, clearSavedBarcode } from './utils/cookieAuth';
 
 export default function App() {
   const [lang, setLang] = useState('ar');
@@ -13,22 +14,34 @@ export default function App() {
   const t = translations[lang];
 
   useEffect(() => {
+    // 1) Try sessionStorage first (same-tab session)
     const savedToken = sessionStorage.getItem('portal_jwt');
     const savedBarcode = sessionStorage.getItem('portal_barcode');
     if (savedToken && savedBarcode) {
       setBarcode(savedBarcode);
       setStudent({ barcode: savedBarcode });
+      return;
+    }
+    // 2) Fall back to persistent cookie (remembered barcode)
+    const cookieBarcode = getSavedBarcode();
+    if (cookieBarcode) {
+      setBarcode(cookieBarcode);
+      setStudent({ barcode: cookieBarcode });
     }
   }, []);
 
-  const handleLoginSuccess = (studentData) => {
+  const handleLoginSuccess = (studentData, remember) => {
     setStudent(studentData);
     setBarcode(studentData.barcode);
+    if (remember) {
+      saveBarcodeToookie(studentData.barcode);
+    }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem('portal_jwt');
     sessionStorage.removeItem('portal_barcode');
+    clearSavedBarcode();
     setStudent(null);
     setBarcode('');
   };

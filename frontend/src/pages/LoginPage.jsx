@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
-import { GraduationCap, ShieldCheck, ArrowRight, ArrowLeft, Camera, ScanLine } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { GraduationCap, ShieldCheck, ArrowRight, ArrowLeft, Camera, ScanLine, BookmarkCheck } from 'lucide-react';
 import { verifyParent } from '../services/api';
 import { translations } from '../utils/i18n';
 import ErrorMessage from '../components/ErrorMessage';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
+import { getSavedBarcode } from '../utils/cookieAuth';
 
 export default function LoginPage({ onLoginSuccess, lang }) {
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const t = translations[lang];
+
+  // Pre-fill barcode from persistent cookie if parent was remembered
+  useEffect(() => {
+    const saved = getSavedBarcode();
+    if (saved) {
+      setBarcode(saved);
+      setRememberMe(true);
+    }
+  }, []);
 
   const doLogin = async (codeToVerify) => {
     const clean = (codeToVerify || '').trim();
@@ -28,7 +39,7 @@ export default function LoginPage({ onLoginSuccess, lang }) {
       if (res.success) {
         sessionStorage.setItem('portal_jwt', res.token);
         sessionStorage.setItem('portal_barcode', res.student.barcode);
-        onLoginSuccess(res.student);
+        onLoginSuccess(res.student, rememberMe);
       }
     } catch (err) {
       setError(err.response?.data?.message || t.errorLogin);
@@ -117,6 +128,54 @@ export default function LoginPage({ onLoginSuccess, lang }) {
               </button>
             </div>
           </div>
+
+          {/* ── Remember Me ── */}
+          <label
+            htmlFor="remember-me-checkbox"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '14px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: 'var(--text-secondary, #94a3b8)',
+              userSelect: 'none',
+            }}
+          >
+            <div
+              onClick={() => setRememberMe((v) => !v)}
+              style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '5px',
+                border: rememberMe ? '2px solid #6366f1' : '2px solid #475569',
+                background: rememberMe ? '#6366f1' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+              }}
+            >
+              {rememberMe && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <input
+              id="remember-me-checkbox"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ display: 'none' }}
+            />
+            <BookmarkCheck size={14} style={{ opacity: 0.7 }} />
+            <span>
+              {lang === 'ar' ? 'تذكرني على هذا الجهاز (30 يوم)' : 'Remember me on this device (30 days)'}
+            </span>
+          </label>
 
           <button
             type="submit"

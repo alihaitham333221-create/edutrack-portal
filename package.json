@@ -5,5 +5,8 @@
   "description": "Monorepo root shim for Vercel Express zero-config",
   "scripts": {
     "start": "node backend/src/server.js"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
