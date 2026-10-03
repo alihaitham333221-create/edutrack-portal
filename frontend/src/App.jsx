@@ -20,6 +20,7 @@ export default function App() {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
 
+    // 1) Active session in sessionStorage (has JWT already) — restore immediately
     const savedToken   = sessionStorage.getItem('portal_jwt');
     const savedBarcode = sessionStorage.getItem('portal_barcode');
     if (savedToken && savedBarcode) {
@@ -27,12 +28,32 @@ export default function App() {
       setStudent({ barcode: savedBarcode });
       return;
     }
+
+    // 2) Cookie-remembered barcode: re-verify to get a fresh JWT.
+    //    We cannot skip verification — the results API requires a valid token.
     const cookieBarcode = getSavedBarcode();
     if (cookieBarcode) {
-      setBarcode(cookieBarcode);
-      setStudent({ barcode: cookieBarcode });
+      import('./services/api').then(({ verifyParent }) => {
+        verifyParent(cookieBarcode)
+          .then((res) => {
+            if (res.success) {
+              sessionStorage.setItem('portal_jwt', res.token);
+              sessionStorage.setItem('portal_barcode', res.student.barcode);
+              setBarcode(res.student.barcode);
+              setStudent(res.student);
+            } else {
+              // Token invalid / student removed — clear stale cookie
+              clearSavedBarcode();
+            }
+          })
+          .catch(() => {
+            // Network error or student not found — clear stale cookie silently
+            clearSavedBarcode();
+          });
+      });
     }
   }, []);
+
 
   const handleLoginSuccess = (studentData, remember) => {
     setStudent(studentData);
