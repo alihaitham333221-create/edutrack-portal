@@ -144,7 +144,6 @@ export default function LoginPage({ onLoginSuccess, lang }) {
             }}
           >
             <div
-              onClick={() => setRememberMe((v) => !v)}
               style={{
                 width: '18px',
                 height: '18px',
