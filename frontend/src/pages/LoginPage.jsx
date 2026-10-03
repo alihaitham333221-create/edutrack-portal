@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, ShieldCheck, ArrowRight, ArrowLeft, Camera, ScanLine, BookmarkCheck, Sigma } from 'lucide-react';
+import { GraduationCap, ShieldCheck, ArrowRight, ArrowLeft, Camera, ScanLine, BookmarkCheck, Sigma, MessageCircle } from 'lucide-react';
 import { verifyParent } from '../services/api';
 import { translations } from '../utils/i18n';
 import ErrorMessage from '../components/ErrorMessage';
@@ -7,7 +7,7 @@ import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import { getSavedBarcode } from '../utils/cookieAuth';
 import { TEACHER } from '../utils/teacher';
 
-export default function LoginPage({ onLoginSuccess, lang }) {
+export default function LoginPage({ onLoginSuccess, lang, onContactOpen }) {
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -265,6 +265,36 @@ export default function LoginPage({ onLoginSuccess, lang }) {
             <ShieldCheck size={14} color="#10b981" />
             <span>Secure • Fast • Available 24/7</span>
           </div>
+
+          {/* ── Contact CTA ── */}
+          {onContactOpen && (
+            <div style={{ marginTop: '18px', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={onContactOpen}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: 'var(--navy-600)',
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  transition: 'background 0.18s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(37,99,235,0.07)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+              >
+                <MessageCircle size={14} />
+                <span>{t.needHelp}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
