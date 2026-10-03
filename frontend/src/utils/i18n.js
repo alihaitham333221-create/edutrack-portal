@@ -53,6 +53,12 @@ export const translations = {
     cameraError: 'تعذر تشغيل الكاميرا. يرجى التأكد من منح إذن الكاميرا للموقع.',
     cameraUploadPhoto: 'رفع صورة الباركود',
     barcodeScanned: 'تم مسح الباركود بنجاح!',
+    // Teacher Branding
+    teacherName: 'الأستاذ أحمد حلي',
+    teacherSubject: 'الرياضيات والإحصاء',
+    teacherTagline: 'نحو القمة والدرجات النهائية في الرياضيات والإحصاء للثانوية العامة واللغات',
+    teacherSupervisor: 'مدرس أول الرياضيات والإحصاء',
+    instructorBadge: 'المعلم: أ/ أحمد حلي',
   },
   en: {
     portalTitle: 'Student Results Portal',
@@ -108,5 +114,11 @@ export const translations = {
     cameraError: 'Could not start camera. Please ensure camera permissions are granted.',
     cameraUploadPhoto: 'Upload Barcode Image',
     barcodeScanned: 'Barcode Scanned Successfully!',
+    // Teacher Branding
+    teacherName: 'Mr. Ahmed Helly',
+    teacherSubject: 'Math & Statistics',
+    teacherTagline: 'Guiding students toward excellence and top scores in Mathematics & Statistics',
+    teacherSupervisor: 'Senior Math & Statistics Instructor',
+    instructorBadge: 'Instructor: Mr. Ahmed Helly',
   },
 };
