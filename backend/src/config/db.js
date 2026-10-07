@@ -2,6 +2,9 @@
 
 const mongoose = require('mongoose');
 
+let cachedConn = null;
+let cachedPromise = null;
+
 // Clear cached connection when Mongoose disconnects or encounters an error
 mongoose.connection.on('disconnected', () => {
   console.warn('[MongoDB] Disconnected. Resetting cached connection.');
@@ -40,8 +43,8 @@ const connectDB = async () => {
     cachedPromise = mongoose.connect(uri, {
       autoIndex: false,
       dbName: 'edutrack_portal',
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
       maxPoolSize: 10,
@@ -53,7 +56,7 @@ const connectDB = async () => {
       cachedPromise = null;
       cachedConn = null;
       console.error(`[MongoDB] Connection Error: ${err.message}`);
-      throw err;
+      return null;
     });
   }
 

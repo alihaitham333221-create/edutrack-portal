@@ -2,6 +2,14 @@
 
 require('dotenv').config();
 
+// Prevent unhandled promise rejections from crashing the serverless container
+process.on('unhandledRejection', (reason) => {
+  console.error('[Unhandled Rejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught Exception]', err);
+});
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -16,8 +24,10 @@ const adminRoutes = require('./routes/admin');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
-// ── Connect to MongoDB ────────────────────────────────────────────────────────
-connectDB();
+// ── Connect to MongoDB (non-blocking, safely caught) ─────────────────────────
+connectDB().catch((err) => {
+  console.error('[MongoDB Initial Connect]', err ? err.message : err);
+});
 
 const app = express();
 
@@ -84,24 +94,30 @@ app.use(morgan(
   { stream: { write: msg => logger.http(msg.trim()) } },
 ));
 
-// ── Health check (standalone, attempts DB reconnect if idle) ──────────────────
-app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], async (_req, res) => {
+// ── Health check (standalone, fast response) ──────────────────────────────────
+app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], (req, res) => {
   if (mongoose.connection.readyState !== 1) {
-    try {
-      await connectDB();
-    } catch (_) {}
+    connectDB().catch(() => {});
   }
-  res.json({
+  res.status(200).json({
     status: 'ok',
+    message: 'EduTrack Portal API is running',
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
   });
 });
 
 // ── Ensure DB Connection for API routes ───────────────────────────────────────
 app.use(async (req, res, next) => {
-  // Allow health check without DB
-  if (req.path === '/api/health' || req.path === '/health' || req.path === '/' || req.path === '/api') {
+  // Allow health check, root, and browser favicon without DB
+  const p = req.path || '';
+  if (
+    p === '/api/health' ||
+    p === '/health' ||
+    p === '/' ||
+    p === '/api' ||
+    p === '/favicon.ico'
+  ) {
     return next();
   }
 
