@@ -84,8 +84,13 @@ app.use(morgan(
   { stream: { write: msg => logger.http(msg.trim()) } },
 ));
 
-// ── Health check (standalone, does not require DB) ───────────────────────────
-app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], (_req, res) => {
+// ── Health check (standalone, attempts DB reconnect if idle) ──────────────────
+app.get(['/api/health', '/api/health/', '/health', '/health/', '/api', '/'], async (_req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (_) {}
+  }
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
