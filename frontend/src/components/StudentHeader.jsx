@@ -72,6 +72,33 @@ export default function StudentHeader({ student, onLogout, lang }) {
               </span>
             )}
           </div>
+
+          {/* Prominent Blocked Reason Display */}
+          {student.isBlocked && (
+            <div
+              style={{
+                marginTop: '8px',
+                marginBottom: '4px',
+                padding: '6px 14px',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: '#991b1b',
+                flexWrap: 'wrap',
+              }}
+            >
+              <ShieldAlert size={15} color="#dc2626" style={{ flexShrink: 0 }} />
+              <span style={{ fontWeight: 800, color: '#dc2626' }}>{t.blockReasonLabel}:</span>
+              <span style={{ fontWeight: 700 }}>
+                {student.blockReason || student.reason || student.notes || t.noBlockReasonRecorded}
+              </span>
+            </div>
+          )}
+
           <div className="student-meta">
             <span className="badge badge-primary">
               <User size={12} /> {t.studentIdLabel}: {student.barcode}

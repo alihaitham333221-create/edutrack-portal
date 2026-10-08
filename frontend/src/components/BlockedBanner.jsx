@@ -46,8 +46,8 @@ export default function BlockedBanner({ student, lang, onContactOpen }) {
           <span className="blocked-reason-title">{t.blockReasonLabel}</span>
         </div>
         <div className="blocked-reason-body">
-          {student.blockReason && student.blockReason.trim() ? (
-            <span className="blocked-reason-value">{student.blockReason}</span>
+          {((student.blockReason || student.reason || student.notes) && String(student.blockReason || student.reason || student.notes).trim()) ? (
+            <span className="blocked-reason-value">{student.blockReason || student.reason || student.notes}</span>
           ) : (
             <span className="blocked-reason-empty">{t.noBlockReasonRecorded}</span>
           )}

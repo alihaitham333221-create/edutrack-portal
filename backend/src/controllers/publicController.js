@@ -78,7 +78,7 @@ const verifyStudent = async (req, res, next) => {
         groups:      student.groups,
         parentPhone: student.parentPhone || '',
         isBlocked:   !!student.isBlocked,
-        blockReason: student.blockReason || '',
+        blockReason: student.blockReason || student.reason || student.notes || '',
       },
     });
   } catch (err) {
@@ -308,7 +308,7 @@ const getStudentResults = async (req, res, next) => {
       student: {
         ...student,
         isBlocked:   !!student.isBlocked,
-        blockReason: student.blockReason || '',
+        blockReason: student.blockReason || student.reason || student.notes || '',
       },
       summary: {
         totalScheduled,
