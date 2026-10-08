@@ -114,7 +114,12 @@ export default function App() {
 
       {/* ── Page Content ── */}
       {student && barcode ? (
-        <ResultsPage barcode={barcode} onLogout={handleLogout} lang={lang} />
+        <ResultsPage
+          barcode={barcode}
+          onLogout={handleLogout}
+          lang={lang}
+          onContactOpen={() => setContactOpen(true)}
+        />
       ) : (
         <LoginPage
           onLoginSuccess={handleLoginSuccess}

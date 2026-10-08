@@ -61,6 +61,11 @@ const studentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    blockReason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     groups: [
       {
         groupId: String,

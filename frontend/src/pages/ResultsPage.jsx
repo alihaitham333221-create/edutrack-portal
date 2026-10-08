@@ -3,12 +3,13 @@ import { Calendar, CheckCircle2, Trophy, Clock, UserX } from 'lucide-react';
 import { useStudentData } from '../hooks/useStudentData';
 import { translations } from '../utils/i18n';
 import StudentHeader from '../components/StudentHeader';
+import BlockedBanner from '../components/BlockedBanner';
 import StatCard from '../components/StatCard';
 import SessionCard from '../components/SessionCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
-export default function ResultsPage({ barcode, onLogout, lang }) {
+export default function ResultsPage({ barcode, onLogout, lang, onContactOpen }) {
   const { data, loading, error } = useStudentData(barcode);
   const t = translations[lang];
 
@@ -26,6 +27,15 @@ export default function ResultsPage({ barcode, onLogout, lang }) {
   return (
     <div className="dashboard-wrapper">
       <StudentHeader student={student} onLogout={onLogout} lang={lang} />
+
+      {/* Blocked Status Banner & Reason */}
+      {student.isBlocked && (
+        <BlockedBanner
+          student={student}
+          lang={lang}
+          onContactOpen={onContactOpen}
+        />
+      )}
 
       {/* Summary Stat Cards */}
       <div className="stats-grid">

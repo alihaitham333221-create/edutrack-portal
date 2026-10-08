@@ -38,7 +38,7 @@ const syncData = async (req, res, next) => {
  */
 const getAccessCodes = async (req, res, next) => {
   try {
-    const students = await Student.find({}, 'barcode name level center rawAccessCode updatedAt').lean();
+    const students = await Student.find({}, 'barcode name level center rawAccessCode isBlocked blockReason updatedAt').lean();
     res.json({
       success: true,
       students,

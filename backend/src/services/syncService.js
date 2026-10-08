@@ -172,6 +172,7 @@ async function syncFullData(payload) {
       phone:       st.phone       || '',
       parentPhone: st.parentPhone || '',
       isBlocked:   !!st.isBlocked,
+      blockReason: st.blockReason || '',
       groups:      studentGroups,
       syncedAt:    new Date(),
     };
